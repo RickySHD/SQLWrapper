@@ -50,7 +50,7 @@ final class SQLConnectionImpl implements SQLConnection {
         if (conn == null) throw new NotYetConnectedException();
 
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            int i = 0;
+            int i = 1;
             for (Object arg : arguments)
                 stmt.setObject(i++, arg);
 
@@ -71,7 +71,7 @@ final class SQLConnectionImpl implements SQLConnection {
 
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
 
-            int i = 0;
+            int i = 1;
             for (Object arg : arguments)
                 stmt.setObject(i++, arg);
 
@@ -99,7 +99,7 @@ final class SQLConnectionImpl implements SQLConnection {
 
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
 
-            int i = 0;
+            int i = 1;
             for (Object arg : arguments)
                 stmt.setObject(i++, arg);
 
@@ -131,7 +131,7 @@ final class SQLConnectionImpl implements SQLConnection {
 
         try (PreparedStatement stmt = conn.prepareStatement(statement)) {
 
-            int i = 0;
+            int i = 1;
             for (Object arg : arguments)
                 stmt.setObject(i++, arg);
 
