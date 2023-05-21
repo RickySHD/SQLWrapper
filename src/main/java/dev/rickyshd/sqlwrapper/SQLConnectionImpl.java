@@ -6,13 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.channels.NotYetConnectedException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.sql.*;
+import java.util.*;
 
 final class SQLConnectionImpl implements SQLConnection {
     private final MysqlDataSource source;
@@ -33,11 +28,10 @@ final class SQLConnectionImpl implements SQLConnection {
             if (conn != null && conn.isValid(1)) return true;
 
             conn = source.getConnection();
+            return true;
         } catch (SQLException e) {
             return false;
         }
-
-        return false;
     }
 
     @Override
@@ -52,12 +46,15 @@ final class SQLConnectionImpl implements SQLConnection {
     }
 
     @Override
-    public Optional<List<Object>> executeQuery(@NotNull String query, @NotNull String valueName, Object... arguments) {
-        try {
-            Optional<ResultSet> _set = executeQueryRaw(query, arguments);
-            if (_set.isEmpty()) return Optional.empty();
+    public Optional<List<Object>> executeQueryGetValue(@NotNull String query, @NotNull String valueName, Object... arguments) {
+        if (conn == null) throw new NotYetConnectedException();
 
-            ResultSet set = _set.get();
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            int i = 0;
+            for (Object arg : arguments)
+                stmt.setObject(i++, arg);
+
+            ResultSet set = stmt.executeQuery();
             List<Object> results = new ArrayList<>();
             while (set.next())
                 results.add(set.getObject(valueName));
@@ -69,7 +66,7 @@ final class SQLConnectionImpl implements SQLConnection {
     }
 
     @Override
-    public Optional<ResultSet> executeQueryRaw(@NotNull String query, Object... arguments) {
+    public Optional<Map<String, List<Object>>> executeQueryByColumn(@NotNull String query, Object... arguments) {
         if (conn == null) throw new NotYetConnectedException();
 
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -79,10 +76,50 @@ final class SQLConnectionImpl implements SQLConnection {
                 stmt.setObject(i++, arg);
 
             ResultSet resultSet = stmt.executeQuery();
-            if (resultSet.next())
-                return Optional.of(resultSet);
+            ResultSetMetaData metaData = resultSet.getMetaData();
 
+            Map<String, List<Object>> result = new HashMap<>();
+
+            for (int j=1; j <= metaData.getColumnCount(); j++)
+                result.put(metaData.getColumnLabel(j), new ArrayList<>());
+
+            while (resultSet.next())
+                for (String label : result.keySet())
+                    result.get(label).add(resultSet.getObject(label));
+
+            return Optional.of(result);
+        } catch (SQLException e) {
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<List<Map<String, Object>>> executeQueryByRow(@NotNull String query, Object... arguments) {
+        if (conn == null) throw new NotYetConnectedException();
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            int i = 0;
+            for (Object arg : arguments)
+                stmt.setObject(i++, arg);
+
+            ResultSet resultSet = stmt.executeQuery();
+            ResultSetMetaData metaData = resultSet.getMetaData();
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            List<String> labels = new ArrayList<>();
+
+            for (int j=1; j <= metaData.getColumnCount(); j++)
+                labels.add(metaData.getColumnLabel(j));
+
+            while (resultSet.next()) {
+                Map<String, Object> m = new HashMap<>();
+                for (String label : labels)
+                    m.put(label, resultSet.getObject(label));
+
+                result.add(m);
+            }
+            return Optional.of(result);
         } catch (SQLException e) {
             return Optional.empty();
         }

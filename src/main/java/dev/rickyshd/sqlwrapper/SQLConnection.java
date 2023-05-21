@@ -2,8 +2,8 @@ package dev.rickyshd.sqlwrapper;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.sql.ResultSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface SQLConnection {
@@ -16,11 +16,13 @@ public interface SQLConnection {
 
     boolean testConnect();
 
-    public Optional<List<Object>> executeQuery(@NotNull String query, @NotNull String valueName, Object... arguments);
+    Optional<List<Object>> executeQueryGetValue(@NotNull String query, @NotNull String valueName, Object... arguments);
 
-    public Optional<ResultSet> executeQueryRaw(@NotNull String query, Object... arguments);
+    Optional<Map<String, List<Object>>> executeQueryByColumn(@NotNull String query, Object... arguments);
 
-    public boolean executeStatement(@NotNull String statement, Object... arguments);
+    Optional<List<Map<String, Object>>> executeQueryByRow(@NotNull String query, Object... arguments);
 
-    public boolean executeFromFile(@NotNull String path);
+    boolean executeStatement(@NotNull String statement, Object... arguments);
+
+    boolean executeFromFile(@NotNull String path);
 }
