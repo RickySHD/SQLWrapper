@@ -45,26 +45,7 @@ final class SQLConnectionImpl implements SQLConnection {
         return true;
     }
 
-    @Override
-    public Optional<List<Object>> executeQueryGetValue(@NotNull String query, @NotNull String valueName, Object... arguments) {
-        if (conn == null) throw new NotYetConnectedException();
-
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            int i = 1;
-            for (Object arg : arguments)
-                stmt.setObject(i++, arg);
-
-            ResultSet set = stmt.executeQuery();
-            List<Object> results = new ArrayList<>();
-            while (set.next())
-                results.add(set.getObject(valueName));
-
-            return Optional.of(results);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
+    @Deprecated
     @Override
     public Optional<Map<String, List<Object>>> executeQueryByColumn(@NotNull String query, Object... arguments) {
         if (conn == null) throw new NotYetConnectedException();
@@ -94,7 +75,7 @@ final class SQLConnectionImpl implements SQLConnection {
     }
 
     @Override
-    public Optional<List<Map<String, Object>>> executeQueryByRow(@NotNull String query, Object... arguments) {
+    public List<SQLRow> executeQuery(@NotNull String query, Object... arguments) {
         if (conn == null) throw new NotYetConnectedException();
 
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -106,7 +87,7 @@ final class SQLConnectionImpl implements SQLConnection {
             ResultSet resultSet = stmt.executeQuery();
             ResultSetMetaData metaData = resultSet.getMetaData();
 
-            List<Map<String, Object>> result = new ArrayList<>();
+            List<SQLRow> result = new ArrayList<>();
             List<String> labels = new ArrayList<>();
 
             for (int j=1; j <= metaData.getColumnCount(); j++)
@@ -117,11 +98,11 @@ final class SQLConnectionImpl implements SQLConnection {
                 for (String label : labels)
                     m.put(label, resultSet.getObject(label));
 
-                result.add(m);
+                result.add(SQLRow.from(m));
             }
-            return Optional.of(result);
+            return result;
         } catch (SQLException e) {
-            return Optional.empty();
+            return new ArrayList<>();
         }
     }
 
