@@ -50,6 +50,14 @@ public interface SQLRow {
      */
     Object getValue(String columnLabel);
 
+    /**
+     * Get a value from the row using a column label and casting it to the given type.
+     * @param columnLabel The label of the column to get the value from.
+     * @param type the type to cast the data to. For convenience should be one of {@link SQLTypes}
+     * @return {@code null} if the columnLabel is not present, the cast value corresponding
+     * to the label otherwise.
+     * @since 1.3.0
+     */
     <T> T getValue(String columnLabel, Class<T> type);
 
 
