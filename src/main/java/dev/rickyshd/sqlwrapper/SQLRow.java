@@ -14,7 +14,7 @@ public interface SQLRow {
      * @since 1.2.0
      * @return A new {@link SQLRow} instance.
      */
-    static @NotNull SQLRow from(Map<String, Object> content) {
+    static @NotNull SQLRow of(Map<String, Object> content) {
         return new SQLRowImpl(content);
     }
 
@@ -49,5 +49,7 @@ public interface SQLRow {
      * @since 1.2.0
      */
     Object getValue(String columnLabel);
+
+
 }
 

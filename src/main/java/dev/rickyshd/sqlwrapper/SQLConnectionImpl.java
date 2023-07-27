@@ -98,7 +98,7 @@ final class SQLConnectionImpl implements SQLConnection {
                 for (String label : labels)
                     m.put(label, resultSet.getObject(label));
 
-                result.add(SQLRow.from(m));
+                result.add(SQLRow.of(m));
             }
             return result;
         } catch (SQLException e) {
