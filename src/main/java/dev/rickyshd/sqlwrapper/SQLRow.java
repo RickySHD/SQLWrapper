@@ -50,6 +50,8 @@ public interface SQLRow {
      */
     Object getValue(String columnLabel);
 
+    <T> T getValue(String columnLabel, Class<T> type);
+
 
 }
 

@@ -26,4 +26,11 @@ final class SQLRowImpl implements SQLRow {
 
         return content.get(columnLabel);
     }
+
+    @Override
+    public <T> T getValue(String columnLabel, Class<T> type) {
+        if (!content.containsKey(columnLabel)) return null;
+
+        return type.cast(content.get(columnLabel));
+    }
 }
