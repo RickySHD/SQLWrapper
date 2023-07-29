@@ -11,15 +11,19 @@ import java.util.*;
 
 final class SQLConnectionImpl implements SQLConnection {
     private final MysqlDataSource source;
+    private final boolean autocommit;
     private Connection conn;
 
-    public SQLConnectionImpl(String host, int port, String username, String password, String database) {
+    public SQLConnectionImpl(String host, int port, String username, String password, String database,
+                             boolean useTransactions) {
         this.source = new MysqlConnectionPoolDataSource();
         source.setServerName(host);
         source.setPort(port);
         source.setUser(username);
         source.setPassword(password);
         source.setDatabaseName(database);
+
+        autocommit = !useTransactions;
     }
 
     @Override
@@ -28,6 +32,7 @@ final class SQLConnectionImpl implements SQLConnection {
             if (conn != null && conn.isValid(1)) return true;
 
             conn = source.getConnection();
+            conn.setAutoCommit(autocommit);
             return true;
         } catch (SQLException e) {
             return false;
@@ -142,5 +147,30 @@ final class SQLConnectionImpl implements SQLConnection {
             ret &= executeStatement(query);
 
         return ret;
+    }
+
+    @Override
+    public void commit() {
+        if (autocommit)
+            throw new RuntimeException("Unable to commit. SQLConnection has auto-commit enabled.");
+
+
+        try {
+            conn.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void rollback() {
+        if (autocommit)
+            throw new RuntimeException("Unable to rollback. SQLConnection has auto-commit enabled.");
+
+        try {
+            conn.rollback();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
