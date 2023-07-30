@@ -19,7 +19,26 @@ public interface SQLConnection {
      */
     static @NotNull SQLConnection to(@NotNull String host, int port, @NotNull String username,
                                      @NotNull String password, @NotNull String database) {
-        return new SQLConnectionImpl(host, port, username, password, database);
+        return to(host, port, username, password, database, false);
+    }
+
+    /**
+     * Prepare a new SQL connection to a database.
+     * @param host The remote or local host the database is running on. Use {@code localhost} for local
+     *             database applications.
+     * @param port The port the database is running on. Default is {@code 3306}.
+     * @param username The username to login as in the database.
+     * @param password The password corresponding to the given user.
+     * @param database The name of the database to connect to.
+     * @param useTransaction Set whether to use transactions or not. If true you'll need to call
+     *                       {@link SQLConnection#commit()} to commit changes or {@link SQLConnection#rollback()}
+     *                       to discard them.
+     * @return A new {@link SQLConnection} instance that is not connected yet.
+     * @since 1.4.0
+     */
+    static @NotNull SQLConnection to(@NotNull String host, int port, @NotNull String username,
+                                     @NotNull String password, @NotNull String database, boolean useTransaction) {
+        return new SQLConnectionImpl(host, port, username, password, database, useTransaction);
     }
 
     /**
@@ -80,4 +99,16 @@ public interface SQLConnection {
      * @return True on success, false otherwise.
      */
     boolean executeFromFile(@NotNull String path);
+
+    /**
+     * Commit the last transaction.
+     * @since 1.4.0
+     */
+    void commit();
+
+    /**
+     * Discard the last transaction and delete all the changes up to the last commit.
+     * @since 1.4.0
+     */
+    void rollback();
 }
