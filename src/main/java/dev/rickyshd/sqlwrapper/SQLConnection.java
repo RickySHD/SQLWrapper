@@ -48,6 +48,12 @@ public interface SQLConnection {
     boolean connect();
 
     /**
+     * Close a connection to the database.
+     * @since 1.5.0
+     */
+    void close();
+
+    /**
      * Test the connection as done through {@link SQLConnection#connect()} but not in a permanent way.
      * This method is provided just to test the connection to the database. The SQLConnection will remain in
      * an unconnected state.

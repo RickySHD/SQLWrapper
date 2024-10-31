@@ -14,6 +14,8 @@ final class SQLConnectionImpl implements SQLConnection {
     private final boolean autocommit;
     private Connection conn;
 
+    private boolean reconnectTried = false;
+
     public SQLConnectionImpl(String host, int port, String username, String password, String database,
                              boolean useTransactions) {
         this.source = new MysqlConnectionPoolDataSource();
@@ -32,10 +34,21 @@ final class SQLConnectionImpl implements SQLConnection {
             if (conn != null && conn.isValid(1)) return true;
 
             conn = source.getConnection();
+            reconnectTried = false;
             conn.setAutoCommit(autocommit);
             return true;
         } catch (SQLException e) {
             return false;
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            if (!autocommit) rollback();
+            conn.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -107,6 +120,7 @@ final class SQLConnectionImpl implements SQLConnection {
             }
             return result;
         } catch (SQLException e) {
+            if (tryReconnect()) executeStatement(query, arguments);
             return new ArrayList<>();
         }
     }
@@ -125,6 +139,7 @@ final class SQLConnectionImpl implements SQLConnection {
             return true;
 
         } catch (SQLException e) {
+            if (tryReconnect()) executeStatement(statement, arguments);
             return false;
         }
     }
@@ -154,7 +169,6 @@ final class SQLConnectionImpl implements SQLConnection {
         if (autocommit)
             throw new RuntimeException("Unable to commit. SQLConnection has auto-commit enabled.");
 
-
         try {
             conn.commit();
         } catch (SQLException e) {
@@ -171,6 +185,16 @@ final class SQLConnectionImpl implements SQLConnection {
             conn.rollback();
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private boolean tryReconnect() {
+        if (reconnectTried) return false;
+        reconnectTried = true;
+
+        if (connect()) return true;
+        else {
+            throw new RuntimeException("Tried reconnecting to database, unsuccessful.");
         }
     }
 }
