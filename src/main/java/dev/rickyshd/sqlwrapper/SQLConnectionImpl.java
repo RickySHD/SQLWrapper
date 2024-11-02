@@ -31,7 +31,7 @@ final class SQLConnectionImpl implements SQLConnection {
     @Override
     public boolean connect() {
         try {
-            if (conn != null && conn.isValid(1)) return true;
+            if (conn != null && conn.isValid(10)) return true;
 
             conn = source.getConnection();
             reconnectTried = false;
@@ -120,8 +120,8 @@ final class SQLConnectionImpl implements SQLConnection {
             }
             return result;
         } catch (SQLException e) {
-            if (tryReconnect()) executeStatement(query, arguments);
-            return new ArrayList<>();
+            if (tryReconnect()) return executeQuery(query, arguments);
+            else return new ArrayList<>();
         }
     }
 
@@ -139,8 +139,8 @@ final class SQLConnectionImpl implements SQLConnection {
             return true;
 
         } catch (SQLException e) {
-            if (tryReconnect()) executeStatement(statement, arguments);
-            return false;
+            if (tryReconnect()) return executeStatement(statement, arguments);
+            else return false;
         }
     }
 
